@@ -218,7 +218,30 @@ def prepare_traces():
 
         inputs = prepare_data(httpclient)
         triton_client_http.infer("ensemble_add_sub_int32_int32_int32", inputs)
+
+def send_bls_request():
+
+    with httpclient.InferenceServerClient("localhost:8000") as client:
+        inputs = []
+        input0_data = np.full(shape=(1, 16), fill_value=-1, dtype=np.int32)
+        input1_data = np.full(shape=(1, 16), fill_value=-1, dtype=np.int32)
         
+
+        inputs.append(httpclient.InferInput('INPUT0', [1, 16], "INT32"))
+        inputs.append(httpclient.InferInput('INPUT1', [1, 16], "INT32"))
+        inputs.append(httpclient.InferInput("MODEL_NAME", [1], "BYTES"))
+
+        # Initialize the data
+        inputs[0].set_data_from_numpy(input0_data)
+        inputs[1].set_data_from_numpy(input1_data)
+        inputs[2].set_data_from_numpy(np.array(["simple"], dtype=np.object_))
+        
+        outputs = [
+            httpclient.InferRequestedOutput("OUTPUT0"),
+            httpclient.InferRequestedOutput("OUTPUT1"),
+        ]
+
+        response = client.infer("bls_simple", inputs, request_id=str(1), outputs=outputs)
 
 if __name__ == '__main__':
     unittest.main()
